@@ -50,6 +50,7 @@ uv sync
 | `uv run pytest` | Lance les tests |
 | `uv lock` | Regénère le fichier `uv.lock` |
 | `uv pip list` | Liste les paquets installés |
+| `uv python pin 3.10` | Épingle la version Python du projet dans .python-version |
 
 ### Activer l'environnement virtuel
 ```bash

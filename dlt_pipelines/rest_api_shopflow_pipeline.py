@@ -1,6 +1,7 @@
 from typing import  List
 import dlt
 from dlt.sources.rest_api import rest_api_source
+from dlt.sources.filesystem import filesystem, read_csv
 
 
 @dlt.transformer(name="carts", primary_key="cart_product_id", write_disposition="merge")
@@ -127,6 +128,36 @@ def load_api_data() -> None:
     ])
     print(load_info)  
 
+def load_csv_data() -> None:
+    """
+    Extrait et charge les données CSV dans une base DuckDB.
+
+    Pipeline DLT 'csv_pipelines' → dataset 'raw' → '../duckdb/data.db'
+
+    Ressources chargées :
+        - stock : données de stock produits depuis les fichiers CSV
+                  du répertoire défini dans config.toml (merge sur
+                  product_id, warehouse_location, last_updated)
+    """
+
+    # Crée le pipe de lecture : parcourt les fichiers CSV du répertoire source
+    filesystem_pipe = filesystem() | read_csv()
+
+    # Crée le pipeline DLT vers DuckDB
+    pipeline = dlt.pipeline(
+        pipeline_name="csv_pipelines",
+        dataset_name="raw",
+        destination=dlt.destinations.duckdb("../duckdb/data.db")
+    )
+
+    # Charge les données en mode merge sur la clé composite
+    load_info = pipeline.run(
+        filesystem_pipe.with_name("stock"),
+        write_disposition="merge",
+        primary_key=["product_id", "warehouse_location", "last_updated"]
+    )
+    print(load_info)
 
 if __name__ == "__main__":
     load_api_data()
+    load_csv_data()
